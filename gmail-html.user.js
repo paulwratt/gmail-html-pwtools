@@ -1,18 +1,18 @@
 // ==UserScript==
 // @name         Multi-select Gmail HTML
 // @namespace    paulwratt.gmail
-// @version      1.10.3
-// @description  add the missing "select all" checkbox from the HTML (fast) version of Gmail
+// @version      1.10.7
+// @description  add the missing "select all" checkbox, and full labels, for the HTML (fast) version of Gmail
 // @author       paul.wratt@gmail.com
 // @icon         data:image/gif;base64,R0lGODlhEAAQAPYAAL4nKsceGMYhHMUiH8ciH8kiHsgjIMojINAkIeI6L+U5LPM/LOI7MPM/M+lCNOpDNepANutENuxENe1ENu5ENu9ENvJCN/NENPJFN/JGN/BCONdjL/JmJ/RkJ/BkKZlBZNBFRy+pVS2qWDOnUjCmVDSoUzWpUzWqVDWrVTWsVDWsVTWtVlutQrm1HYOzNfC9B/+7Af2+Av+/A/q8BPy9BP+/BP/CBP/HBHZhpVpwyT+G9z6I+z6L/0GE80GE9EKH90OH90OH+EOI+USI+USI+gAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAEUALAAAAAAQABAAAAd5gEWCg4SFhoeIiYQDCASINDczggEGBwmGHDY1MIIfBQIMGRKCEhoeMTItgjo4AAoRGA4OGBAdLy4kgj48OSAXDxQUDxYbLCIlgj1BO0ULFRMTFQ1FISjIRcpAg8GDJ9bJQdqH3tc9REOIKivXPkI/iCYpI4r09faDgQA7
-// @homepage     https://paulwratt.github.io/gmail-pwtools/
+// @homepage     https://paulwratt.github.io/gmail-html-pwtools/
 // @include      https://mail.google.com/mail/u/*/h/*
 // @run-at       document-end
 // @grant        GM_addStyle
 // ==/UserScript==
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  // this GreaseMonkey userscript is ONLY FOR Gmail "HTML view"
+  // this GreaseMonkey userscript is ONLY FOR Gmail "HTML view" (Simple View)
   // - tested with TamperMonkey, maybe works with ViolentMonkey too
   // - its ECMAscript v5, so it should work with any GreasyMonkey engine (back to 2005 v1).
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -69,6 +69,32 @@ if (typeof GM_addStyle != "undefined") {
   }
   
   /**
+   * Creates  full "select options" not ...
+   * @return {null}
+   */
+  
+  function pw_GMinsertNewSelect(n) {
+    var i_s=document.getElementsByTagName('select');
+    var i_r=i_s[0].options;
+    var i_h=null;
+    for (var i=0; i<i_r.length; i++) {
+      if (i_r[i].value.indexOf('c_')==1) {
+//       we just drop the first 3 characters from the "value" to get the full label name (I use paths)
+        i_h=i_h+'<option value="'+i_r[i].value+'">'+i_r[i].value.substring(3)+'</option>\n';
+      }else{
+        i_h=i_h+i_r[i].outerHTML+'\n';
+      }
+    }
+    i_s[0].innerHTML=i_h;
+// just in case there are select dropdowns in an html email, we only change the first & last ones on the page.
+// NOTE: we dont use ByName to select "tact" & "bact", because older browsers dont support elements on the form DOM
+//       which is where their document stores and references "name" objects, _UNLESS_ name=id (not the case here)
+//       in fact, here they are _BOTH PHYSICALLY OuTSIDE_ their form objects, which would screw things up even 
+//       further. like the next "workaround", "oldschool" rules (element.innerHTML = direct DOM manipulation)
+    i_s[i_s.length-1].innerHTML=i_h;
+  }
+  
+  /**
    * Creates  "checkbox list" ticker
    * @return {null}
    */
@@ -113,6 +139,7 @@ if (typeof GM_addStyle != "undefined") {
     }
   }
   
+
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   // Main
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -126,6 +153,8 @@ if (typeof GM_addStyle != "undefined") {
       pw_GMaddStyles();
 //     make sure the page only has list of emails
       if (document.getElementsByName('t').length!=0) { pw_GMinsertSelectAll(document.scripts[document.scripts.length-1].nonce); }
+//     make sure the page is email related (ie not labels etc)
+      if (document.getElementsByName('tact').length!=0) { pw_GMinsertNewSelect(document.scripts[document.scripts.length-1].nonce); }
     }
   }
   
